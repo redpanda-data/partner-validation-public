@@ -1,0 +1,31 @@
+# Credentials (NEVER commit these!)
+config.sh
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/tfplan
+
+# Kubeconfig
+*.kubeconfig
+
+# Reports
+reports/
+
+# Temporary files
+/tmp/
+*.log
+*.tmp
+
+# macOS
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
