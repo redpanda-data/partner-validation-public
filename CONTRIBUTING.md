@@ -60,10 +60,6 @@ Brief description of change
 
 - Bullet point details if needed
 - Additional context
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Your Name <your.email@example.com>
 ```
 
 ## Adding New Partners

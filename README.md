@@ -6,7 +6,7 @@ This repository contains validation tests and certification materials for Redpan
 
 Redpanda is a streaming data platform for developers. This repository provides automated validation scripts and tests to verify Redpanda deployments across various cloud provider platforms.
 
-## Supported Partners
+## Service Provider Partners
 
 - **Akamai/Linode** - Validation scripts for Redpanda on Linode Kubernetes Engine (LKE)
 
@@ -56,4 +56,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues or questions:
 - Open an issue in this repository
-- Contact Redpanda support at [https://redpanda.com/support](https://redpanda.com/support)
