@@ -1,0 +1,235 @@
+# Sensitive Configuration Files
+config.sh
+*.env
+.env
+.env.*
+secrets.yaml
+secrets.yml
+
+# API Keys and Credentials
+**/api-keys.txt
+**/credentials.json
+**/credentials.txt
+**/*-credentials.*
+**/*-secrets.*
+**/.credentials
+**/api_token*
+**/access_key*
+**/secret_key*
+
+# Terraform Sensitive Files
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform.tfstate.backup
+**/terraform.tfvars
+**/.terraform.tfstate.lock.info
+**/crash.log
+**/crash.*.log
+**/*.tfstate
+**/*.tfstate.*
+
+# Kubernetes Configuration (contains cluster credentials)
+**/kubeconfig
+**/kubeconfig.*
+**/*-kubeconfig
+**/*-kubeconfig.*
+~/.kube/config
+**/.kube/
+**/k8s-config
+
+# Helm
+**/charts/*.tgz
+**/.helm/
+
+# SSH Keys
+**/*.pem
+**/*.key
+**/*.ppk
+**/id_rsa
+**/id_dsa
+**/id_ecdsa
+**/id_ed25519
+**/.ssh/
+
+# SSL/TLS Certificates (may contain private keys)
+**/*.crt
+**/*.cert
+**/*.cer
+**/*.p12
+**/*.pfx
+**/*.jks
+**/*.keystore
+
+# Reports with Potentially Sensitive Data
+**/reports/*.log
+**/reports/*-full-*.log
+**/reports/metrics-*.json
+**/reports/screenshots/
+**/reports/**/*.png
+**/reports/**/*.jpg
+
+# Generated Reports (allow markdown reports but not logs)
+**/*-report-*.log
+**/*-metrics-*.json
+
+# Logs
+*.log
+**/logs/
+**/log/
+**/*.log.*
+
+# Backup Files
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+*.orig
+*.save
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# IDE and Editors
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.classpath
+.c9/
+*.launch
+.recommenders/
+*.swp
+*.swo
+*~
+.metadata
+.recommenders
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Archives (compressed project files that may contain sensitive data)
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Customer/Partner Data
+**/customer-data/
+**/partner-data/
+**/pii/
+**/*-pii.*
+**/*-customer-*
+**/*-partner-*
+
+# Test Outputs (may contain real data from tests)
+**/test-output/
+**/test-results/
+**/benchmark-results/
+
+# Video Files (recordings may contain sensitive info)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# Documentation Drafts (may contain sensitive notes)
+**/*-draft.*
+**/*-notes.*
+**/NOTES.txt
+**/TODO-private.md
+
+# Object Storage Test Data
+**/object-storage-test/test-data/
+**/object-storage-test/*.log
+
+# Linode CLI Configuration
+~/.config/linode-cli
+
+# Allow specific documentation files
+!README.md
+!**/README.md
+!ARCHITECTURE.md
+!**/*ARCHITECTURE*.md
+!**/QUICKSTART.md
+!**/CHECKLIST.md
+!**/*REPORT.md
+
+# Allow example configuration files
+!config.example.sh
+!terraform.tfvars.example
+!*.example.*
