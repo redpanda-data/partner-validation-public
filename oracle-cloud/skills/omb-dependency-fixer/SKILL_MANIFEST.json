@@ -1,0 +1,60 @@
+{
+  "name": "omb-dependency-fixer",
+  "version": "1.0.0",
+  "description": "Autonomous troubleshooter for OpenMessaging Benchmark dependency issues",
+  "type": "troubleshooting",
+  "category": "infrastructure",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-02-06",
+  "validated_on": ["linode"],
+  "requirements": {
+    "os": ["Ubuntu 20.04+", "Debian 10+", "RHEL 8+"],
+    "tools": ["maven", "java-11", "ssh", "scp"],
+    "permissions": ["root or sudo"],
+    "network": ["internet access for Maven Central"]
+  },
+  "handles": [
+    "NoSuchMethodError: io.netty.buffer.ByteBuf.isContiguous",
+    "NoClassDefFoundError: JMX agent",
+    "AsyncHttpClient version conflicts",
+    "Missing dependency errors"
+  ],
+  "strategies": [
+    {
+      "name": "rebuild",
+      "description": "Rebuild OMB with fixed dependency versions",
+      "time": "10-15 minutes",
+      "success_rate": "high",
+      "recommended_for": ["netty_conflict", "version_mismatch"]
+    },
+    {
+      "name": "copy-libs",
+      "description": "Synchronize coordinator lib directory to all workers",
+      "time": "2-3 minutes",
+      "success_rate": "medium",
+      "recommended_for": ["quick_fix", "library_mismatch"]
+    },
+    {
+      "name": "download-jmx",
+      "description": "Download and deploy JMX agent JAR",
+      "time": "1-2 minutes",
+      "success_rate": "high",
+      "recommended_for": ["jmx_missing"]
+    }
+  ],
+  "usage": {
+    "standalone": "./fix-omb-dependencies.sh --omb-path <path> --client-ips <ips> --ssh-key <key>",
+    "with_agent": "Include skill in autonomous agent prompt",
+    "integration": "Can be called from install-omb-tools.sh or benchmark automation"
+  },
+  "outputs": {
+    "logs": ["/tmp/maven-build.log", "/tmp/omb-fix.log"],
+    "backups": ["/tmp/omb-backup-<timestamp>"],
+    "artifacts": ["/tmp/omb-lib-fixed.tar.gz"]
+  },
+  "cost": {
+    "compute": "negligible",
+    "time": "10-30 minutes",
+    "network": "~50-100MB Maven downloads"
+  }
+}

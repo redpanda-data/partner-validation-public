@@ -1,0 +1,31 @@
+{
+  "name": "setup-observability",
+  "version": "1.0.0",
+  "description": "Deploy the redpanda-data/observability stack (Prometheus + Grafana) and publish a public Grafana endpoint; skips if already running",
+  "type": "provisioning",
+  "category": "observability",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-06",
+  "validated_on": ["oci"],
+  "idempotent": true,
+  "requirements": {
+    "os": ["Ubuntu 20.04+"],
+    "tools": ["ssh", "curl"],
+    "permissions": ["root on monitoring host"],
+    "network": [
+      "TCP 3000 open to internet on monitoring host",
+      "TCP 9644 from monitoring host to brokers",
+      "internet access for get.docker.com, Docker Hub, GitHub"
+    ]
+  },
+  "inputs": {
+    "monitoring-host": "public IP of the dedicated monitoring node",
+    "broker-ips": "comma-separated broker private IPs",
+    "ssh-key": "SSH private key path (default ~/.ssh/redpanda_oci)",
+    "grafana-password": "admin password (default redpanda-benchmark)"
+  },
+  "outputs": {
+    "grafana_endpoint": "https://<ip-with-dashes>.sslip.io (Let's Encrypt TLS via Caddy, anonymous read-only)"
+  },
+  "upstream": "https://github.com/redpanda-data/observability"
+}

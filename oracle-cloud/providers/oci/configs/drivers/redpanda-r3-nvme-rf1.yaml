@@ -1,0 +1,31 @@
+# Partner round 3b — RF=1 diagnostic variant of the NVMe driver.
+# Isolates replication cost vs the rf=3 run: same producers, same workload,
+# same NVMe cluster — but each byte is written once and never replicated.
+# NOT a production durability model (spec requires rf=3); this quantifies
+# what replication costs on this hardware.
+# min.insync.replicas MUST drop to 1 with rf=1 (acks=all = leader ack only).
+name: Redpanda
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+replicationFactor: 1
+topicConfig: |
+  min.insync.replicas=1
+  compression.type=producer
+  redpanda.remote.write=true
+  redpanda.remote.read=true
+  retention.local.target.bytes=21474836480
+commonConfig: |
+  bootstrap.servers=BROKER_IPS_PLACEHOLDER
+producerConfig: |
+  acks=all
+  linger.ms=5
+  batch.size=1048576
+  compression.type=none
+  max.in.flight.requests.per.connection=5
+  enable.idempotence=true
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=8388608
+  fetch.max.bytes=134217728
+  fetch.min.bytes=65536
+  fetch.max.wait.ms=100

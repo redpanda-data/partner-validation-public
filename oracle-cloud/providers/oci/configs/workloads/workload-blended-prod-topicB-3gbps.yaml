@@ -1,0 +1,14 @@
+# Partner production model — Topic B (high-volume stream): rf=1, 1x fanout
+# 3 GB/s total load point: B carries 80% = 2400000 msg/s @ 1KB
+name: Partner prod Topic B - rf1 1x fanout - 3GBps point
+topics: 1
+partitionsPerTopic: 500
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 500
+producersPerTopic: 200
+producerRate: 2400000
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5

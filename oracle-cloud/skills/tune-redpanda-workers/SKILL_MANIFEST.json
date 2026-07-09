@@ -1,0 +1,31 @@
+{
+  "name": "tune-redpanda-workers",
+  "version": "1.0.0",
+  "description": "Tune Kubernetes worker nodes for Redpanda: XFS local-NVMe storage (RAID-0, local PVs) + rpk autotuner (aio, IRQ, scheduler, cpu, net) + optional iotune",
+  "type": "provisioning",
+  "category": "performance",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-07",
+  "validated_on": ["oci-oke"],
+  "idempotent": true,
+  "upstream_docs": [
+    "https://docs.redpanda.com/current/deploy/redpanda/kubernetes/k-requirements/#storage",
+    "https://docs.redpanda.com/current/deploy/redpanda/kubernetes/k-tune-workers/#io"
+  ],
+  "requirements": {
+    "os": ["Oracle Linux 8/9 (OKE nodes)"],
+    "tools": ["ssh", "kubectl"],
+    "permissions": ["sudo on worker nodes"],
+    "network": ["nodes reachable via SSH", "internet for redpanda rpm + local-path-provisioner"]
+  },
+  "inputs": {
+    "node-ips": "comma-separated worker node IPs",
+    "ssh-key": "SSH private key (default ~/.ssh/redpanda_oci)",
+    "ssh-user": "node SSH user (default opc)",
+    "iotune": "flag: run rpk iotune (~10 min/node)"
+  },
+  "caveats": [
+    "kernel tuning lost on reboot — rerun after node restarts",
+    "local-path PVs are node-bound"
+  ]
+}

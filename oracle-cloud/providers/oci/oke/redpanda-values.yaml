@@ -1,0 +1,70 @@
+# Redpanda on OKE — Partner benchmark values
+# 6 brokers, rf=3 topics, no TLS (matches the VM-based benchmark runs),
+# external NodePort listeners so the VM-based OMB clients in the same VCN
+# can produce/consume via node private IPs.
+statefulset:
+  replicas: 6
+
+resources:
+  cpu:
+    cores: 14
+  memory:
+    container:
+      max: 100Gi
+
+storage:
+  persistentVolume:
+    enabled: true
+    size: 1500Gi
+    storageClass: oci-bv-perf
+  tiered:
+    config:
+      cloud_storage_enabled: true
+      cloud_storage_region: us-ashburn-1
+      cloud_storage_bucket: redpanda-tiered-benchmark
+      cloud_storage_api_endpoint: <OS_NAMESPACE>.compat.objectstorage.us-ashburn-1.oraclecloud.com
+      cloud_storage_api_endpoint_port: 443
+      cloud_storage_disable_tls: false
+      cloud_storage_url_style: path
+      # access/secret key injected at deploy time via:
+      #   --set-string storage.tiered.config.cloud_storage_access_key=... \
+      #   --set-string storage.tiered.config.cloud_storage_secret_key=...
+      # (never commit credentials)
+
+tls:
+  enabled: false
+
+external:
+  enabled: true
+  type: NodePort
+
+listeners:
+  kafka:
+    port: 9093
+    external:
+      default:
+        port: 9094
+        advertisedPorts:
+          - 31092
+  admin:
+    port: 9644
+    external:
+      default:
+        port: 9645
+        advertisedPorts:
+          - 31644
+  http:
+    enabled: false
+  rpc:
+    port: 33145
+  schemaRegistry:
+    enabled: false
+
+console:
+  enabled: false
+
+monitoring:
+  enabled: false
+
+post_install_job:
+  enabled: true

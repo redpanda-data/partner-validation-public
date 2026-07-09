@@ -1,0 +1,13 @@
+{
+  "name": "check-cloud-capacity",
+  "version": "1.0.0",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-07",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 zero judgment calls, verify-after-every-step",
+  "description": "One-command multi-cloud (oci/aws/linode/azure/gcp) quota+shape-offering matrix per AD, plus real launch probe (quota != capacity). Use before any deploy or when launches fail."
+}

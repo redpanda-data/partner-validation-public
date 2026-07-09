@@ -1,0 +1,13 @@
+{
+  "name": "collect-run-metrics",
+  "version": "1.0.0",
+  "description": "Post-run Prometheus battery, time-anchored to the run window: broker produce p50/p99 (the headline latency), CPU, wire rates, tiered upload rate+counter+backoffs, URP. Writes metrics.md into the run dir.",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-08",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 encodes every trap hit in the July 2026 runs"
+}

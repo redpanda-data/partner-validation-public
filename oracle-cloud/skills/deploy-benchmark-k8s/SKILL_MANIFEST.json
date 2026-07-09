@@ -1,0 +1,13 @@
+{
+  "name": "deploy-benchmark-k8s",
+  "version": "1.0.0",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-07",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 zero judgment calls, verify-after-every-step",
+  "description": "Phase-gated deploy runbook (RUNBOOK.md) with verify.sh gate checks after every phase and a failure table covering every error seen in practice."
+}

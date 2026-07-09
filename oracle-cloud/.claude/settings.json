@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rpk connect blobl *)",
+      "Bash(rpk connect lint *)",
+      "Bash(rpk connect list *)",
+      "Bash(docker compose config *)",
+      "Bash(docker compose ps *)",
+      "Bash(terraform output *)",
+      "Bash(terraform validate)",
+      "Bash(terraform plan *)",
+      "Bash(oci compute image list *)",
+      "Bash(oci compute shape list *)",
+      "Bash(oci limits value list *)",
+      "Bash(oci limits resource-availability get *)",
+      "Bash(oci ce cluster list *)",
+      "Bash(kubectl get *)",
+      "Bash(terraform state list *)",
+      "Bash(terraform state show *)",
+      "Bash(oci ce node-pool get *)",
+      "Bash(oci os bucket get *)"
+    ]
+  }
+}

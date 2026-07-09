@@ -1,0 +1,13 @@
+{
+  "name": "teardown-benchmark-infra",
+  "version": "1.0.0",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-07",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 zero judgment calls, verify-after-every-step",
+  "description": "Ordered teardown (k8s volumes -> OKE -> main stack -> bucket) ending in a zero-billing verification that must print ALL CLEAR."
+}

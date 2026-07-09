@@ -1,0 +1,13 @@
+{
+  "name": "run-omb-benchmark",
+  "version": "1.0.0",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-07",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 zero judgment calls, verify-after-every-step",
+  "description": "Stage, launch, monitor, and collect an OMB run end-to-end: verifies/restarts workers, sets bootstrap, generates workers.yaml, safe nohup launch, error-detecting monitor, downloads results + summary."
+}

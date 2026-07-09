@@ -1,0 +1,20 @@
+# Partner driver config — production-safe durability (acks=all, rf=3)
+name: Redpanda
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+replicationFactor: 3
+topicConfig: |
+  min.insync.replicas=2
+  compression.type=lz4
+commonConfig: |
+  bootstrap.servers=BROKER_IPS_PLACEHOLDER
+producerConfig: |
+  acks=all
+  linger.ms=1
+  batch.size=131072
+  compression.type=lz4
+  max.in.flight.requests.per.connection=5
+  enable.idempotence=true
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=5242880

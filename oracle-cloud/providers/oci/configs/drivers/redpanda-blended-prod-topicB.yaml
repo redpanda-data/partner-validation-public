@@ -1,0 +1,26 @@
+# Partner production model — Topic B driver: rf=1 (high-volume, relaxed durability per production design)
+name: Redpanda
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+replicationFactor: 1
+topicConfig: |
+  min.insync.replicas=1
+  compression.type=producer
+  redpanda.remote.write=true
+  redpanda.remote.read=true
+  retention.local.target.bytes=21474836480
+commonConfig: |
+  bootstrap.servers=BROKER_IPS_PLACEHOLDER
+producerConfig: |
+  acks=all
+  linger.ms=5
+  batch.size=1048576
+  compression.type=none
+  max.in.flight.requests.per.connection=5
+  enable.idempotence=true
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=8388608
+  fetch.max.bytes=134217728
+  fetch.min.bytes=65536
+  fetch.max.wait.ms=100

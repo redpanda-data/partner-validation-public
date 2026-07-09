@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "oci-api": {
+      "command": "uvx",
+      "args": ["oracle.oci-api-mcp-server"]
+    },
+    "oci-cloud": {
+      "command": "uvx",
+      "args": ["oracle.oci-cloud-mcp-server"]
+    }
+  }
+}

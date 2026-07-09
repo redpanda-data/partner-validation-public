@@ -1,0 +1,11 @@
+# Higher-performance block volumes for Redpanda data (20 VPUs/GB)
+# until DenseIO local-NVMe nodes are granted by Oracle.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: oci-bv-perf
+provisioner: blockvolume.csi.oraclecloud.com
+parameters:
+  vpusPerGB: "20"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true

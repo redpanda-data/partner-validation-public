@@ -1,0 +1,26 @@
+# Partner round 2 driver — tiered storage topic + user-specified batching
+# (linger.ms=5, batch.size=1MB). retention.local.target.bytes keeps ~2GiB per
+# partition replica on local disk (~140GB/broker) — prevents disk fill at
+# random-payload rates AND forces continuous tiered uploads (scenario 2).
+name: Redpanda
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+replicationFactor: 3
+topicConfig: |
+  min.insync.replicas=2
+  compression.type=producer
+  redpanda.remote.write=true
+  redpanda.remote.read=true
+  retention.local.target.bytes=2147483648
+commonConfig: |
+  bootstrap.servers=10.0.1.170:31092,10.0.1.215:31092,10.0.1.182:31092,10.0.1.36:31092,10.0.1.23:31092,10.0.1.173:31092
+producerConfig: |
+  acks=all
+  linger.ms=5
+  batch.size=1048576
+  compression.type=none
+  max.in.flight.requests.per.connection=5
+  enable.idempotence=true
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=5242880
