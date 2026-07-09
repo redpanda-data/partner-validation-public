@@ -1,0 +1,13 @@
+{
+  "name": "run-blended-benchmark",
+  "version": "1.0.0",
+  "description": "Dual-coordinator mixed-durability benchmark (e.g. topic A rf=3 + topic B rf=1): disjoint worker fleets, synchronized launch, sentinel monitoring, marker-based completion, date-time run dir + README. Zero judgment calls.",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-08",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 encodes every trap hit in the July 2026 runs"
+}

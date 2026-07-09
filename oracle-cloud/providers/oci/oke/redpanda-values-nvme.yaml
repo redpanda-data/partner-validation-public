@@ -1,0 +1,72 @@
+# Redpanda on OKE — DenseIO E6 NVMe variant
+# Differences from redpanda-values.yaml:
+#   - storage on local NVMe (nvme-local storage class from the
+#     tune-redpanda-workers skill; XFS per Redpanda k8s requirements)
+#   - tuning.tune_aio_events enabled (pairs with host-level `rpk tune all`)
+#   - resources sized for 8-OCPU (16 vCPU) / 96GB DenseIO E6 nodes
+statefulset:
+  replicas: 6
+
+resources:
+  cpu:
+    cores: 14
+  memory:
+    container:
+      max: 80Gi
+
+tuning:
+  tune_aio_events: true
+
+storage:
+  persistentVolume:
+    enabled: true
+    size: 5000Gi
+    storageClass: nvme-local
+  tiered:
+    config:
+      cloud_storage_enabled: true
+      cloud_storage_region: us-ashburn-1
+      cloud_storage_bucket: redpanda-tiered-benchmark
+      cloud_storage_api_endpoint: <OS_NAMESPACE>.compat.objectstorage.us-ashburn-1.oraclecloud.com
+      cloud_storage_api_endpoint_port: 443
+      cloud_storage_disable_tls: false
+      cloud_storage_url_style: path
+      # access/secret via --set-string at deploy time (see providers/oci/.env.tiered-storage)
+
+tls:
+  enabled: false
+
+external:
+  enabled: true
+  type: NodePort
+
+listeners:
+  kafka:
+    port: 9093
+    external:
+      default:
+        port: 9094
+        advertisedPorts:
+          - 31092
+  admin:
+    port: 9644
+    external:
+      default:
+        port: 9645
+        advertisedPorts:
+          - 31644
+  http:
+    enabled: false
+  rpc:
+    port: 33145
+  schemaRegistry:
+    enabled: false
+
+console:
+  enabled: false
+
+monitoring:
+  enabled: false
+
+post_install_job:
+  enabled: true

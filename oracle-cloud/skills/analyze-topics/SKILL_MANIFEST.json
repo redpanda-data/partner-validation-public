@@ -1,0 +1,13 @@
+{
+  "name": "analyze-topics",
+  "version": "1.0.0",
+  "description": "Scale-aware rpk topic analyze: in-cluster per-topic with --batches 5 (NodePort clients time out >150 partitions), hard ceilings, unzip-safe rpk install for external mode.",
+  "type": "operations",
+  "category": "benchmark-lifecycle",
+  "author": "Claude Code Autonomous Agent",
+  "created": "2026-07-08",
+  "validated_on": [
+    "oci-oke"
+  ],
+  "designed_for": "execution by any model \u2014 encodes every trap hit in the July 2026 runs"
+}

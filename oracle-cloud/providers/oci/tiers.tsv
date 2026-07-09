@@ -1,0 +1,2 @@
+Tier	Provider	Instance	OCPUs	vCPU	Memory GiB	Boot Vol GB	Broker Count	Target MB/s	Est Cost/hr (per broker)
+1	oci	VM.Standard.E4.Flex	2	4	8	200 (20 VPU/GB)	3	60	$0.062 compute + $0.017 storage

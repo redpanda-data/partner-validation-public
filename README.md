@@ -9,11 +9,13 @@ Redpanda is a streaming data platform for developers. This repository provides a
 ## Service Provider Partners
 
 - **Akamai/Linode** - Validation scripts for Redpanda on Linode Kubernetes Engine (LKE)
+- **Oracle Cloud (OCI)** - Full benchmark package for Redpanda on OKE: Terraform, Helm values, workloads from 60 MB/s to 4 GB/s, runbooks, and published results (July 2026 campaign — 4 GB/s blended production workload sustained)
 
 ## Repository Structure
 
 ```
 ├── akamai-linode/     # Akamai/Linode validation scripts and tests
+├── oracle-cloud/      # OCI/OKE benchmark package: infra, workloads, runbooks, results
 ├── .gitignore         # Security-focused gitignore for credentials
 └── LICENSE            # MIT License
 ```

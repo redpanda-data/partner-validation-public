@@ -1,0 +1,24 @@
+# Partner Scenario 1 — Baseline sustained workload (OCI/OKE spec)
+# Models the production shape: 250 producers, 140 partitions,
+# 140 consumers in ONE consumer group, rf=3 (set in driver), 3 GB/s ingress.
+#
+# ASSUMPTION: 1KB messages (spec does not state message size).
+#   3 GiB/s = 3,145,728 msg/s aggregate. If the partner's real average event
+#   size differs, scale producerRate = 3 GiB/s ÷ messageSize.
+#
+# NOTE on egress: with a single consumer group, steady-state egress == ingress
+# (3 GB/s). The 4 GB/s egress target cannot exceed ingress in steady state
+# with 1 group — see workload-blended-catchup.yaml, which validates consumers
+# can sustain >4 GB/s while draining a backlog.
+name: Partner Baseline - 3GBps ingress, 140p, 250 producers, 1 group
+topics: 1
+partitionsPerTopic: 140
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 140
+producersPerTopic: 250
+producerRate: 3145728
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5

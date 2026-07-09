@@ -1,0 +1,16 @@
+# Partner Round 2 — tiered storage + 1:2 fanout, NO compression
+# Byte-path honesty comes from compression.type=none in the driver (raw 1KB
+# messages on the wire), not from payload randomization.
+# Two consumer groups -> 6 GiB/s logical egress target (covers the 4 GB/s goal).
+name: Partner R2 - tiered, 1-2 fanout, no compression
+topics: 1
+partitionsPerTopic: 140
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 2
+consumerPerSubscription: 140
+producersPerTopic: 250
+producerRate: 3145728
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5

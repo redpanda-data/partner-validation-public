@@ -1,0 +1,21 @@
+# Partner egress validation — consumer catch-up at >4 GB/s
+# Same production shape as baseline, but OMB first builds a backlog with
+# consumers paused, then releases them. Consumers must read faster than the
+# 3 GiB/s ingress to drain it — this is how we prove the 4 GB/s egress
+# target with a single consumer group (steady-state egress can never exceed
+# ingress with 1 group).
+#
+# Pass: backlog drains to zero and stays there; drain rate observed in the
+# results is >= 4 GiB/s aggregate consumer throughput.
+name: Partner Catchup - 4GBps egress validation, 140p, 1 group
+topics: 1
+partitionsPerTopic: 140
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 140
+producersPerTopic: 250
+producerRate: 3145728
+consumerBacklogSizeGB: 300
+testDurationMinutes: 30
+warmupDurationMinutes: 5

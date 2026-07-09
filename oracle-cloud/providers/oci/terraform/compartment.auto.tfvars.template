@@ -1,0 +1,8 @@
+# Copy to compartment.auto.tfvars (gitignored) and fill in.
+# terraform loads *.auto.tfvars automatically — no -var-file flag needed.
+
+# The compartment to create everything in. Using the tenancy root OCID works;
+# a dedicated compartment is cleaner. Find yours:
+#   grep '^tenancy=' ~/.oci/config          # root/tenancy OCID
+#   oci iam compartment list                # sub-compartments
+compartment_ocid = "ocid1.compartment.oc1..CHANGE_ME"

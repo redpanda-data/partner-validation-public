@@ -1,0 +1,146 @@
+{
+ "uid": "oci-object-storage",
+ "title": "OCI Object Storage / Tiered Storage",
+ "tags": [
+  "redpanda",
+  "tiered-storage"
+ ],
+ "timezone": "browser",
+ "refresh": "10s",
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "timeseries",
+   "title": "Object Storage Uploads (ops/sec, by broker)",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 0
+   },
+   "targets": [
+    {
+     "expr": "sum by (instance) (rate(redpanda_cloud_client_uploads[5m]))",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "type": "timeseries",
+   "title": "Object Storage Downloads (ops/sec, by broker)",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 0
+   },
+   "targets": [
+    {
+     "expr": "sum by (instance) (rate(redpanda_cloud_client_downloads[5m]))",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "type": "timeseries",
+   "title": "Upload/Download Backoffs (object store throttling \u2014 should be 0)",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 8
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(redpanda_cloud_client_upload_backoff[5m]))",
+     "legendFormat": "upload backoff"
+    },
+    {
+     "expr": "sum(rate(redpanda_cloud_client_download_backoff[5m]))",
+     "legendFormat": "download backoff"
+    },
+    {
+     "expr": "sum(rate(redpanda_cloud_client_lease_timeouts_total[5m]))",
+     "legendFormat": "lease timeouts"
+    },
+    {
+     "expr": "sum(rate(redpanda_cloud_client_not_found[5m]))",
+     "legendFormat": "not-found errors"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "type": "timeseries",
+   "title": "Cloud Client Pool Utilization (per broker)",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "max": 1,
+     "unit": "percentunit"
+    }
+   },
+   "targets": [
+    {
+     "expr": "avg by (instance) (redpanda_cloud_client_client_pool_utilization)",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "type": "timeseries",
+   "title": "Object Storage Request Latency p99 (lease duration)",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 16
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    }
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(redpanda_cloud_client_lease_duration_bucket[5m])))",
+     "legendFormat": "p99"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "type": "timeseries",
+   "title": "Local Disk Free (per broker) \u2014 retention pushes data to object storage",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 16
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes"
+    }
+   },
+   "targets": [
+    {
+     "expr": "min by (instance) (redpanda_storage_disk_free_bytes)",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  }
+ ]
+}

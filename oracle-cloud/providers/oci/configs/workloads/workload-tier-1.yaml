@@ -1,0 +1,13 @@
+# Tier 1 - 60 MB/s Benchmark (identical to the Linode tier-1 workload)
+name: Tier 1 - 60 MB/s Benchmark
+topics: 2
+partitionsPerTopic: 20
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 1
+producersPerTopic: 8
+producerRate: 61440
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5

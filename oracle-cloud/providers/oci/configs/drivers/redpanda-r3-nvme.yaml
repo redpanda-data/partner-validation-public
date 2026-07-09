@@ -1,0 +1,32 @@
+# Partner round 3 driver — NVMe nodes, tuned for maximum throughput while
+# staying production-safe (acks=all, idempotent — never acks=0/1 per spec).
+#
+# Producer: IDENTICAL to the r2 run (user requirement — no producer changes):
+# acks=all, linger 5ms, 1MB batches, no compression, idempotent.
+# Consumer: bigger per-partition and per-fetch ceilings so 140 consumers per
+# group drain 140 partitions in few round-trips at multi-GiB/s.
+name: Redpanda
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+replicationFactor: 3
+topicConfig: |
+  min.insync.replicas=2
+  compression.type=producer
+  redpanda.remote.write=true
+  redpanda.remote.read=true
+  retention.local.target.bytes=21474836480
+commonConfig: |
+  bootstrap.servers=BROKER_IPS_PLACEHOLDER
+producerConfig: |
+  acks=all
+  linger.ms=5
+  batch.size=1048576
+  compression.type=none
+  max.in.flight.requests.per.connection=5
+  enable.idempotence=true
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=8388608
+  fetch.max.bytes=134217728
+  fetch.min.bytes=65536
+  fetch.max.wait.ms=100

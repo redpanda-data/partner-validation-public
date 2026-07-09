@@ -1,0 +1,51 @@
+# Local NVMe storage for Redpanda on OKE, per
+# https://docs.redpanda.com/current/deploy/redpanda/kubernetes/k-requirements/#storage
+# (local PersistentVolumes on XFS-formatted NVMe; network storage prohibited).
+#
+# Uses rancher local-path-provisioner pointed at the XFS NVMe mount created by
+# tune-workers.sh (/var/lib/redpanda-nvme). Apply AFTER tuning nodes:
+#   kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
+#   kubectl apply -f local-nvme-storageclass.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: local-path-storage
+data:
+  config.json: |-
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/var/lib/redpanda-nvme"]
+        }
+      ]
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      containers:
+      - name: helper-pod
+        # fully-qualified: OL9 nodes enforce short-name resolution — a bare
+        # "busybox" (or sideloaded localhost/ alias) causes ImageInspectError
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: IfNotPresent
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nvme-local
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete

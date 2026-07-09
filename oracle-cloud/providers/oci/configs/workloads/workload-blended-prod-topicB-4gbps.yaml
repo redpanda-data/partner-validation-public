@@ -1,0 +1,14 @@
+# Partner production model — Topic B @ 4 GB/s total load point
+# (80% share, rf=1 via driver, 1x fanout)
+name: Partner prod Topic B - 4GBps point
+topics: 1
+partitionsPerTopic: 500
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 500
+producersPerTopic: 200
+producerRate: 3200000
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5

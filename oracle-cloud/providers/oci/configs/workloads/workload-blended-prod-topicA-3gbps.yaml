@@ -1,0 +1,17 @@
+# Partner production model — Topic A (durable stream): rf=3, 2x fanout
+# 3 GB/s total load point: A carries 20% = 600000 msg/s @ 1KB
+# Launch CONCURRENTLY with workload-blended-prod-topicB-3gbps.yaml
+# using a SEPARATE OMB coordinator + disjoint worker set (rf differs per
+# topic; one OMB instance supports a single driver rf).
+name: Partner prod Topic A - rf3 2x fanout - 3GBps point
+topics: 1
+partitionsPerTopic: 150
+messageSize: 1024
+payloadFile: "payload/payload-1Kb.data"
+subscriptionsPerTopic: 2
+consumerPerSubscription: 150
+producersPerTopic: 50
+producerRate: 600000
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30
+warmupDurationMinutes: 5
