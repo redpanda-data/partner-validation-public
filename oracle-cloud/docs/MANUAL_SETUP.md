@@ -101,31 +101,138 @@ Use `e4-nvme.tfvars` for the smaller Flex8 shape. Node OCIDs/images go
 stale between deployments — if a launch 404s, see
 [`providers/oci/REDEPLOY_CHECKLIST.md`](../providers/oci/REDEPLOY_CHECKLIST.md).
 
-## Step 4 — Prepare the broker nodes (NVMe + rpk tuning)
+## Step 4 — Prepare the broker nodes (SSDs + rpk tuning)
 
-DenseIO NVMe drives arrive raw. This script SSHes to each node and: formats
-the NVMe as XFS (RAID-0 if the shape has 2 drives, e.g. Flex16), mounts it
-at `/var/lib/redpanda-nvme` with `noatime`, installs the Redpanda package on
-the host, and runs the autotuner — `rpk redpanda mode production` +
-`rpk redpanda tune all` (aio_events, cpu governor, disk IRQ/scheduler/
-nomerges, network, swappiness, clocksource, ballast):
+DenseIO local NVMe SSDs arrive **raw and unformatted** — nothing is mounted
+until you do it. How many drives you have depends on the shape:
+
+| Shape (OCPUs) | Local NVMe SSDs | Usable after RAID-0 |
+|---|---|---|
+| VM.DenseIO.E4.Flex 8  | 1× 6.8 TB | ~6.8 TB |
+| VM.DenseIO.E4.Flex 16 | 2× 6.8 TB | ~13.6 TB |
+| VM.DenseIO.E4.Flex 32 | 4× 6.8 TB | ~27 TB |
+| VM.DenseIO.E5.Flex    | 1 per 8 OCPUs | scales likewise |
+
+The script below does everything in this step for you, per node:
 
 ```bash
-# node IPs: kubectl get nodes -o wide  (INTERNAL-IP column)
+# node IPs: kubectl get nodes -o wide  (INTERNAL-IP column; SSH user is opc)
 ./skills/tune-redpanda-workers/tune-workers.sh \
-  --node-ips <node-ip,node-ip,...> --ssh-key ~/.ssh/redpanda_oci
+  --node-ips <node-ip,node-ip,...> --ssh-key ~/.ssh/redpanda_oci \
+  [--disable-smt]
 ```
 
-Then install the local-volume provisioner and the storage class that turns
-that mount into PersistentVolumes:
+If you prefer to do it by hand (or need to debug), here is exactly what it
+does — run all of this **as root on each broker node**:
+
+### 4a. Identify the SSDs
+
+```bash
+lsblk -d -o NAME,SIZE,TYPE,MOUNTPOINTS
+# NVMe devices appear as nvme0n1, nvme1n1, ... (6.2-6.8 TB each).
+# Only use devices with an EMPTY MOUNTPOINTS column — the boot volume is
+# a block device (sda), leave it alone.
+```
+
+### 4b. Two or more SSDs → software RAID-0 (stripe)
+
+Redpanda wants one filesystem for its data dir, so multiple drives are
+striped into a single md device. RAID-0 (not 1/5/10) because replication
+is Redpanda's job (rf=3 across brokers) — local redundancy would waste
+half the throughput and capacity:
+
+```bash
+dnf install -y mdadm                      # Oracle Linux 9 (OKE nodes)
+mdadm --create /dev/md0 --level=0 --raid-devices=2 --force --run \
+      /dev/nvme0n1 /dev/nvme1n1           # list ALL data SSDs; 2 shown
+mdadm --detail --scan >> /etc/mdadm.conf  # so the array reassembles on boot
+cat /proc/mdstat                          # verify: "active raid0"
+```
+
+(Single-SSD shapes: skip this and use `/dev/nvme0n1` directly below.)
+
+### 4c. XFS + mount
+
+XFS is the filesystem Redpanda requires for data dirs
+(https://docs.redpanda.com/current/deploy/redpanda/kubernetes/k-requirements/#storage):
+
+```bash
+mkfs.xfs -f /dev/md0
+mkdir -p /var/lib/redpanda-nvme
+mount -o noatime /dev/md0 /var/lib/redpanda-nvme
+```
+
+### 4d. Persist the mount in fstab — BY UUID, not device name
+
+md device names are **not stable across reboots** (md0 can come back as
+md127). Always use the filesystem UUID:
+
+```bash
+UUID=$(blkid -s UUID -o value /dev/md0)
+echo "UUID=$UUID /var/lib/redpanda-nvme xfs noatime,nofail 0 2" >> /etc/fstab
+mount -a && findmnt /var/lib/redpanda-nvme   # verify
+```
+
+### 4e. Kernel/OS tuning (rpk autotuner)
+
+Install the Redpanda package on the HOST (binary only — the broker itself
+runs in Kubernetes) and run the autotuner:
+
+```bash
+curl -1sLf 'https://linux.pkg.redpanda.com/setup-redpanda.rpm.sh' | bash
+dnf install -y redpanda
+systemctl disable --now redpanda   # we only want rpk + tuners, not a broker
+rpk redpanda mode production
+rpk redpanda tune all
+```
+
+`tune all` applies: aio_events, ballast_file, clocksource, cpu governor,
+disk IRQ affinity, disk nomerges, disk scheduler (none/noop for NVMe),
+net IRQ/rps, swappiness, and transparent hugepages.
+
+### 4f. Optional but recommended for latency: disable SMT/hyperthreading
+
+Redpanda is thread-per-core (one busy-polling shard per core); two
+hyperthread siblings sharing a physical core fight over cache and execution
+units and inflate p99. On NIC/disk-bound brokers the ~20-30% aggregate CPU
+that SMT adds is unused, so this is a free tail-latency win:
+
+```bash
+echo off > /sys/devices/system/cpu/smt/control   # immediate, this boot
+grubby --update-kernel=ALL --args=nosmt          # persistent across reboots
+nproc                                            # now = physical core count
+```
+
+If you do this, size the Redpanda Helm `resources.cpu.cores` to the
+PHYSICAL core count minus ~2 for the OS/kubelet (e.g. 30 of 32).
+
+### 4g. Kubernetes storage class (turns the mount into PersistentVolumes)
+
+Back on your workstation:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
 kubectl apply -f skills/tune-redpanda-workers/local-nvme-storageclass.yaml
+kubectl get pods -n local-path-storage   # must be Running — if
+# ImageInspectError: the provisioner image must be fully qualified
+# (docker.io/rancher/local-path-provisioner:v0.0.30) on Oracle Linux nodes
 ```
 
-**Rerun the tune script after any node reboot** — NVMe mounts and tuning
-don't fully persist.
+The storage class (`nvme-local`) points the provisioner at
+`/var/lib/redpanda-nvme`, so each broker's PVC lands on its local RAID-0.
+
+### 4h. Verify before continuing
+
+```bash
+# on each node: mount present, array healthy, tuning applied
+findmnt /var/lib/redpanda-nvme            # xfs, noatime
+cat /proc/mdstat | grep raid0             # multi-SSD shapes only
+rpk redpanda tune list                    # shows enabled tuners
+```
+
+**Rerun this step (script or manual) after ANY node reboot** — the fstab
+mount and `nosmt` persist, but the runtime tuners (IRQ affinity, governor)
+do not.
 
 ## Step 5 — Install Redpanda (initial cluster setup)
 
