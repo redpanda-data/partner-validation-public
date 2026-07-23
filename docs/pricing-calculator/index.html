@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Redpanda Cluster Pricing Calculator — OCI</title>
+<style>
+  :root { --red:#e2401b; --dark:#1c1c28; --ok:#1a7f37; --warn:#b45309; --bad:#b91c1c; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; background:#f6f7f9; color:var(--dark); }
+  header { background:var(--dark); color:#fff; padding:14px 24px; }
+  header h1 { margin:0; font-size:18px; } header p { margin:4px 0 0; font-size:12px; opacity:.75; }
+  .wrap { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px 24px; max-width:1400px; margin:auto; }
+  .card { background:#fff; border:1px solid #e3e5e8; border-radius:10px; padding:14px 16px; }
+  .card h2 { font-size:14px; margin:0 0 10px; display:flex; justify-content:space-between; align-items:center;}
+  .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px 14px; }
+  label { font-size:11px; color:#555; display:block; }
+  input, select { width:100%; box-sizing:border-box; padding:5px 7px; font-size:13px; border:1px solid #cfd3d8; border-radius:6px; }
+  .out table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .out td, .out th { padding:4px 8px; border-bottom:1px solid #eee; text-align:right; }
+  .out td:first-child, .out th:first-child { text-align:left; }
+  .big { font-size:20px; font-weight:700; }
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .presets button, .adv-toggle { margin:0 4px 6px 0; font-size:11px; padding:4px 8px; border:1px solid #cfd3d8; background:#fff; border-radius:6px; cursor:pointer; }
+  .presets button:hover { border-color:var(--red); color:var(--red); }
+  .delta { background:#fffbe9; }
+  .foot { font-size:11px; color:#777; padding:0 24px 24px; max-width:1400px; margin:auto; }
+  .adv { display:none; margin-top:8px; border-top:1px dashed #ddd; padding-top:8px; }
+  .adv.show { display:grid; }
+  .badge { font-size:10px; padding:2px 6px; border-radius:10px; background:#eef; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Redpanda Cluster Pricing Calculator — OCI DenseIO</h1>
+  <p>Quantify RF, compression, fan-out, acks and shape decisions. Models anchored to measured benchmark campaign data (see footnotes). Everything is editable.</p>
+</header>
+
+<div class="wrap" id="wrap"></div>
+
+<div class="foot">
+  <b>Model provenance (validated Redpanda-on-OCI benchmark campaigns, Feb–Jul 2026):</b>
+  NIC = 1 Gbps/OCPU full duplex (OCI DenseIO spec). Wire accounting: IN = P·c·RF, OUT = P·c·(RF−1) + P·c·F.
+  CPU busy-cores = α·P + β·(RF−1)·P + γ·P·F, defaults fitted to: 10 GB/s RF=1 (8× E4-32 @77% CPU, Jul 13) and 3 GB/s RF=3 (4× E4-32 @69% CPU measured Jul 23, p99 7.5–7.8 ms).
+  Latency guidance from the measured ladder: fsync acks=all ≈29 ms; write_caching/acks=0 ≈1.5–8 ms, degrading as CPU/NIC exceed ~65–70%.
+  Compression ratio c applies to wire+disk (producer-side compression; 1.0=none, lz4 typical 0.3–0.6 on JSON, ~0.25 on repetitive payloads).
+  Broker floor: RF≥2 needs ≥RF+1 nodes to self-heal after a broker loss. Object storage: tiered uploads 1 logical copy regardless of RF.
+  Prices are editable estimates — validate against your rate card.
+</div>
+
+<script>
+const SHAPES = {
+  "DenseIO.E4.Flex-8":  {ocpu:8,  nic:1.0, nvmeTB:6.8,  memGB:128},
+  "DenseIO.E4.Flex-16": {ocpu:16, nic:2.0, nvmeTB:13.6, memGB:256},
+  "DenseIO.E4.Flex-32": {ocpu:32, nic:4.0, nvmeTB:27.2, memGB:512},
+  "DenseIO.E5.Flex-24": {ocpu:24, nic:3.0, nvmeTB:20.4, memGB:288},
+  "DenseIO.E5.Flex-32": {ocpu:32, nic:4.0, nvmeTB:27.2, memGB:384},
+  "DenseIO.E5.Flex-48": {ocpu:48, nic:6.0, nvmeTB:40.8, memGB:576},
+};
+const PRESETS = {
+  "3 GB/s prod model (RF=3) — MEASURED": {P:3, F:1.2, rf:3, c:1.0, shape:"DenseIO.E4.Flex-32", n:0, acks:"acks=0 + write_caching", retentionH:12, tiered:true},
+  "3 GB/s prod model (RF=1 legacy)":     {P:3, F:1.2, rf:1, c:1.0, shape:"DenseIO.E4.Flex-16", n:0, acks:"acks=0 + write_caching", retentionH:12, tiered:true},
+  "3 in / 4 out (RF=3)":  {P:3, F:1.333, rf:3, c:1.0, shape:"DenseIO.E4.Flex-32", n:0, acks:"acks=0 + write_caching", retentionH:12, tiered:true},
+  "10 GB/s (RF=3, 12 brokers)":          {P:10, F:1.5, rf:3, c:1.0, shape:"DenseIO.E4.Flex-32", n:12, acks:"acks=0 + write_caching", retentionH:6, tiered:true},
+  "10 GB/s (RF=3, 16 brokers)":          {P:10, F:1.5, rf:3, c:1.0, shape:"DenseIO.E4.Flex-32", n:16, acks:"acks=0 + write_caching", retentionH:6, tiered:true},
+  "10 GB/s (RF=1, as validated Jul 13)": {P:10, F:1.5, rf:1, c:1.0, shape:"DenseIO.E4.Flex-32", n:8,  acks:"acks=0 + write_caching", retentionH:6, tiered:true},
+  "lz4 compressible JSON (c=0.4)":       {P:3, F:1.2, rf:3, c:0.4, shape:"DenseIO.E4.Flex-32", n:0, acks:"acks=0 + write_caching", retentionH:24, tiered:true},
+};
+const DEF_ADV = { alpha:12, beta:4, gamma:3.5, nicCeil:0.65, cpuCeil:0.65, ocpuHr:0.07, objGBmo:0.0255, comprCpu:0.10, smt:true, allocFrac:0.875 };
+
+function scenarioCard(id, title, preset) {
+  const s = Object.assign({P:3,F:1.2,rf:3,c:1.0,shape:"DenseIO.E4.Flex-32",n:0,acks:"acks=0 + write_caching",retentionH:12,tiered:true}, preset||{});
+  return `
+  <div class="card" id="${id}">
+    <h2>${title} <span class="badge" id="${id}-verdict"></span></h2>
+    <div class="presets">${Object.keys(PRESETS).map(p=>`<button onclick="applyPreset('${id}','${p.replace(/'/g,"\\'")}')">${p}</button>`).join("")}</div>
+    <div class="grid">
+      <div><label>Produce rate P (GB/s, logical)</label><input type="number" step="0.1" id="${id}-P" value="${s.P}"></div>
+      <div><label>Consumer fan-out F (egress = P×F)</label><input type="number" step="0.05" id="${id}-F" value="${s.F}"></div>
+      <div><label>Replication factor</label><select id="${id}-rf">${[1,2,3,5].map(v=>`<option ${v==s.rf?"selected":""}>${v}</option>`).join("")}</select></div>
+      <div><label>Compression ratio c (wire/logical)</label><input type="number" step="0.05" min="0.05" max="1" id="${id}-c" value="${s.c}"></div>
+      <div><label>Broker shape</label><select id="${id}-shape">${Object.keys(SHAPES).map(k=>`<option ${k==s.shape?"selected":""}>${k}</option>`).join("")}</select></div>
+      <div><label>Broker count (0 = auto-size)</label><input type="number" step="1" min="0" id="${id}-n" value="${s.n}"></div>
+      <div><label>Durability / latency mode</label><select id="${id}-acks">
+        <option ${s.acks.includes("write_caching")?"selected":""}>acks=0 + write_caching</option>
+        <option ${s.acks=="acks=all + write_caching"?"selected":""}>acks=all + write_caching</option>
+        <option ${s.acks=="acks=all + fsync"?"selected":""}>acks=all + fsync</option>
+      </select></div>
+      <div><label>Local retention (hours)</label><input type="number" step="1" id="${id}-ret" value="${s.retentionH}"></div>
+      <div><label>Tiered storage (30-day history)</label><select id="${id}-tiered"><option ${s.tiered?"selected":""}>on</option><option ${!s.tiered?"selected":""}>off</option></select></div>
+      <div><label>Client fleet $/hr (0 = exclude)</label><input type="number" step="0.1" id="${id}-client" value="0"></div>
+    </div>
+    <button class="adv-toggle" onclick="document.getElementById('${id}-adv').classList.toggle('show')">advanced model params ▾</button>
+    <div class="grid adv" id="${id}-adv">
+      <div><label>α cores per GB/s produce-path</label><input type="number" step="0.5" id="${id}-alpha" value="${DEF_ADV.alpha}"></div>
+      <div><label>β cores per GB/s replica-copy</label><input type="number" step="0.5" id="${id}-beta" value="${DEF_ADV.beta}"></div>
+      <div><label>γ cores per GB/s consumed</label><input type="number" step="0.5" id="${id}-gamma" value="${DEF_ADV.gamma}"></div>
+      <div><label>NIC ceiling (fraction)</label><input type="number" step="0.05" id="${id}-nicCeil" value="${DEF_ADV.nicCeil}"></div>
+      <div><label>CPU ceiling (fraction)</label><input type="number" step="0.05" id="${id}-cpuCeil" value="${DEF_ADV.cpuCeil}"></div>
+      <div><label>$ per OCPU-hr (all-in)</label><input type="number" step="0.005" id="${id}-ocpuHr" value="${DEF_ADV.ocpuHr}"></div>
+      <div><label>Object storage $/GB-month</label><input type="number" step="0.001" id="${id}-objGBmo" value="${DEF_ADV.objGBmo}"></div>
+      <div><label>Compression CPU penalty (frac of α)</label><input type="number" step="0.05" id="${id}-comprCpu" value="${DEF_ADV.comprCpu}"></div>
+      <div><label>Usable core fraction of OCPU alloc</label><input type="number" step="0.025" id="${id}-allocFrac" value="${DEF_ADV.allocFrac}"></div>
+    </div>
+    <div class="out" id="${id}-out" style="margin-top:10px"></div>
+  </div>`;
+}
+
+function g(id,k){ const el=document.getElementById(`${id}-${k}`); return el.type==="number"?parseFloat(el.value||0):el.value; }
+
+function calc(id) {
+  const P=g(id,"P"), F=g(id,"F"), rf=parseInt(g(id,"rf")), c=g(id,"c");
+  const shape=SHAPES[g(id,"shape")], nIn=parseInt(g(id,"n"))||0;
+  const acks=g(id,"acks"), retH=g(id,"ret"), tiered=g(id,"tiered")==="on";
+  const A={}; for (const k of Object.keys(DEF_ADV)) if(k!=="smt") A[k]=g(id,k)??DEF_ADV[k];
+
+  // wire traffic (GB/s), compression applies on the wire and disk
+  const wIn  = P*c*rf;              // client produce + follower receives
+  const wOut = P*c*(rf-1) + P*c*F;  // replication sends + consumer egress
+  // cpu busy cores (compression penalty applied to produce path)
+  const cpu = (A.alpha*(1+(c<1?A.comprCpu:0)))*P + A.beta*(rf-1)*P + A.gamma*P*F;
+  // sizing
+  const floor = rf>1 ? rf+1 : 3;
+  const nNic = Math.ceil(Math.max(wIn, wOut) / (shape.nic*A.nicCeil));
+  const coresPerNode = shape.ocpu*A.allocFrac;      // physical cores usable by broker
+  const nCpu = Math.ceil(cpu / (coresPerNode*A.cpuCeil));
+  const nAuto = Math.max(nNic, nCpu, floor);
+  const N = nIn>0 ? nIn : nAuto;
+  // utilization at N
+  const uNicIn = wIn/N/shape.nic, uNicOut = wOut/N/shape.nic, uCpu = cpu/(N*coresPerNode);
+  // disk
+  const writePerNode = P*c*rf/N;                          // GB/s to NVMe
+  const localTB = P*c*rf*retH*3600/1000;                  // TB stored locally cluster-wide
+  const localFits = localTB <= N*shape.nvmeTB*0.8;
+  const objTB = tiered ? P*c*30*86400/1000 : 0;           // 30-day logical history, 1 copy
+  // cost
+  const hr = N*shape.ocpu*A.ocpuHr + g(id,"client");
+  const mo = hr*730 + objTB*1000*A.objGBmo;
+  // latency verdict (measured ladder + utilization)
+  let lat, cls;
+  const hot = Math.max(uNicOut, uNicIn, uCpu);
+  if (acks==="acks=all + fsync") { lat="~29 ms — FAILS p99≤10ms"; cls="bad"; }
+  else if (hot<=0.65) { lat = rf>1 ? "~2–8 ms (measured 7.5–7.8 @3GB/s RF3)" : "~1.5–4 ms"; cls="ok"; }
+  else if (hot<=0.78) { lat="~5–15 ms — p99≤10ms AT RISK"; cls="warn"; }
+  else { lat=">15 ms likely — saturated"; cls="bad"; }
+  const verdict = nIn>0 && nIn<nAuto ? `undersized (auto=${nAuto})` : "ok";
+  document.getElementById(`${id}-verdict`).textContent = `N=${N} · $${hr.toFixed(2)}/hr`;
+  const pc = v => `<span class="${v>0.78?'bad':v>0.65?'warn':'ok'}">${(v*100).toFixed(0)}%</span>`;
+  document.getElementById(`${id}-out`).innerHTML = `
+   <table>
+    <tr><th></th><th>value</th><th></th><th>value</th></tr>
+    <tr><td>Brokers (NIC / CPU / floor → auto)</td><td>${nNic} / ${nCpu} / ${floor} → <b>${nAuto}</b>${nIn>0?` (using ${N})`:""}</td>
+        <td>Wire in / out (GB/s)</td><td>${wIn.toFixed(1)} / ${wOut.toFixed(1)}</td></tr>
+    <tr><td>Per-broker NIC in / out</td><td>${pc(uNicIn)} / ${pc(uNicOut)}</td>
+        <td>CPU (busy ${cpu.toFixed(0)} cores)</td><td>${pc(uCpu)}</td></tr>
+    <tr><td>NVMe write per broker</td><td>${(writePerNode*1000).toFixed(0)} MB/s</td>
+        <td>Local data @ retention</td><td class="${localFits?'ok':'bad'}">${localTB.toFixed(1)} TB ${localFits?"fits":"EXCEEDS NVMe!"}</td></tr>
+    <tr><td>Object storage (30d, 1 copy)</td><td>${objTB.toFixed(1)} TB</td>
+        <td>Expected broker p99</td><td class="${cls}">${lat}</td></tr>
+    <tr><td class="big">Cost</td><td class="big">$${hr.toFixed(2)}/hr</td>
+        <td class="big">Monthly</td><td class="big">$${(mo/1000).toFixed(1)}k</td></tr>
+   </table>`;
+  return {N, hr, mo, wIn, wOut, uNicOut, uCpu, lat};
+}
+
+function applyPreset(id, name){
+  const p = PRESETS[name];
+  for (const [k,v] of Object.entries({P:p.P,F:p.F,c:p.c,n:p.n,ret:p.retentionH})) document.getElementById(`${id}-${k}`).value=v;
+  document.getElementById(`${id}-rf`).value=p.rf;
+  document.getElementById(`${id}-shape`).value=p.shape;
+  document.getElementById(`${id}-acks`).value=p.acks;
+  document.getElementById(`${id}-tiered`).value=p.tiered?"on":"off";
+  recalc();
+}
+
+function recalc(){
+  const a=calc("A"), b=calc("B");
+  document.getElementById("delta").innerHTML = `
+   <h2>Δ B vs A</h2><div class="out"><table>
+   <tr><td>Brokers</td><td>${b.N-a.N>=0?"+":""}${b.N-a.N}</td>
+       <td>Cost/hr</td><td>${b.hr-a.hr>=0?"+":""}$${(b.hr-a.hr).toFixed(2)} (${a.hr>0?((b.hr/a.hr-1)*100).toFixed(0):"—"}%)</td></tr>
+   <tr><td>Monthly</td><td>${b.mo-a.mo>=0?"+":""}$${((b.mo-a.mo)/1000).toFixed(1)}k</td>
+       <td>Wire out</td><td>${(b.wOut-a.wOut).toFixed(1)} GB/s</td></tr>
+   </table></div>`;
+}
+
+document.getElementById("wrap").innerHTML =
+  scenarioCard("A","Scenario A", PRESETS["3 GB/s prod model (RF=3) — MEASURED"]) +
+  scenarioCard("B","Scenario B", PRESETS["10 GB/s (RF=3, 12 brokers)"]) +
+  `<div class="card delta" id="delta" style="grid-column:1/3"></div>`;
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",recalc));
+recalc();
+</script>
+</body>
+</html>
